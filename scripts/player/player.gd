@@ -4,6 +4,7 @@ const MAX_SPEED = 80
 const ACCELERATION = 500
 const STOP_FRICCTION = 400
 const SPEED_BOOST = 50
+const ROLL_SPEED = 130
 
 enum {
 	MOVE,
@@ -14,6 +15,9 @@ enum {
 
 var state = MOVE
 var velocity = Vector2.ZERO
+# If assume the same velocity vector as roll the effect will be fluid and interesting
+# but it bugs in a infinity roll
+var roll_vector = Vector2.LEFT
 
 onready var animationTree =  $AnimationTree
 onready var animationState = animationTree.get("parameters/playback")
@@ -33,10 +37,13 @@ func _physics_process(delta):
 		ROLL:
 			velocity = roll_state(delta)
 
+func move():
+	velocity = move_and_slide(velocity)
+
 func move_state(delta):
 	var input_vector = get_player_axis_vector()
 	velocity = apply_player_speed_and_acceleration(delta, input_vector)
-	velocity = move_and_slide(velocity)
+	move()
 	return velocity
 
 func attack_state(delta):
@@ -44,11 +51,16 @@ func attack_state(delta):
 	animationState.travel("Attack")
 	
 func roll_state(delta):
+	velocity = roll_vector * ROLL_SPEED
 	animationState.travel("Roll")
-	velocity = move_state(delta)
+	#velocity = move_state(delta) 
+	move()
+	
 	return velocity
 
 func animation_finished():
+	if state == ROLL:
+		velocity = velocity / 4
 	state = MOVE
 	
 func get_player_axis_vector():
@@ -70,9 +82,12 @@ func get_player_action():
 
 func apply_player_speed_and_acceleration(delta, input_vector):
 	if input_vector != Vector2.ZERO:
+		roll_vector = input_vector
 		var final_speed = MAX_SPEED
 		if state == RUN:
 			final_speed = MAX_SPEED + SPEED_BOOST
+		elif state == ROLL:
+			final_speed	 = ROLL_SPEED
 		input_vector = input_vector * final_speed
 		set_animation_tree(input_vector)
 		set_player_movement_animation(input_vector)
