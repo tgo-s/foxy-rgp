@@ -21,10 +21,11 @@ var roll_vector = Vector2.LEFT
 
 onready var animationTree =  $AnimationTree
 onready var animationState = animationTree.get("parameters/playback")
-
+onready var swordHitbox = $HtitboxPivo/SwordHitbox
 # equivalent to constructor
 func _ready():
 	animationTree.active = true
+	swordHitbox.knockback_vector = roll_vector
 	pass
 
 func _physics_process(delta):
@@ -83,6 +84,7 @@ func get_player_action():
 func apply_player_speed_and_acceleration(delta, input_vector):
 	if input_vector != Vector2.ZERO:
 		roll_vector = input_vector
+		swordHitbox.knockback_vector = input_vector
 		var final_speed = MAX_SPEED
 		if state == RUN:
 			final_speed = MAX_SPEED + SPEED_BOOST
